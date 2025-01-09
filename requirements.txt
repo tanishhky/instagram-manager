@@ -1,0 +1,2 @@
+Flask==2.3.2
+instagrapi==1.18.3

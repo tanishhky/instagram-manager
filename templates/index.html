@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Non-Followers</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fafafa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .user-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .user-card {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            width: 180px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-card img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 15px;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .username {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .unfollow-btn {
+            background-color: #c82333;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        .unfollow-btn:hover {
+            background-color: #9a1723;
+        }
+
+        .logout-btn {
+            background-color: #0077b5;
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 30px;
+            width: calc(100% - 40px);
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logout-btn:hover {
+            background-color: #005a8c;
+        }
+
+        /* Loading indicator styles */
+        .loading-indicator {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 8px solid #f3f3f3; /* Light grey */
+            border-top: 8px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive design adjustments */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
+
+            .user-card {
+                width: calc(50% - 20px);
+                padding: 15px;
+            }
+
+            .logout-btn {
+                width: calc(100% - 30px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .user-card {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-indicator" id="loadingIndicator">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+        <h2>Non-Followers List</h2>
+        <div class="user-list" id="user-list"></div>
+    </div>
+
+    <script>
+        let isFetching = false; // Flag to prevent multiple simultaneous fetches
+
+        // Function to show the loading indicator
+        function showLoadingIndicator() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+        }
+
+        // Function to hide the loading indicator
+        function hideLoadingIndicator() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+
+        async function fetchNonFollowers() {
+            if (isFetching) return; // Prevent multiple fetches
+            isFetching = true;
+            showLoadingIndicator();
+
+            try {
+                const response = await fetch('/non_followers');
+                const nonFollowers = await response.json();
+
+                if (nonFollowers.error) {
+                    alert("Error: " + nonFollowers.error);
+                    return;
+                }
+
+                const userList = document.getElementById('user-list');
+                userList.innerHTML = ''; // Clear previous list
+
+                nonFollowers.forEach(user => {
+                    const userCard = document.createElement('div');
+                    userCard.classList.add('user-card');
+                    userCard.innerHTML = `
+                        <img src="${user.profile_pic}" alt="${user.username}">
+                        <div class="username">${user.username}</div>
+                        <button class="unfollow-btn" onclick="unfollowUser('${user.id}')">Unfollow</button>
+                    `;
+                    userList.appendChild(userCard);
+                });
+            } catch (error) {
+                console.error("Fetch error:", error);
+                alert("An error occurred while fetching data.");
+            } finally {
+                hideLoadingIndicator();
+                isFetching = false;
+            }
+        }
+
+        async function unfollowUser(userId) {
+            if (!confirm(`Are you sure you want to unfollow user ${userId}?`)) {
+                return;
+            }
+            showLoadingIndicator();
+            try {
+                const response = await fetch(`/unfollow/${userId}`, { method: 'POST' });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert("Error: " + data.error);
+                } else {
+                    alert(data.message);
+                    fetchNonFollowers(); // Refresh the list after unfollow
+                }
+            } catch (error) {
+                console.error("Unfollow error:", error);
+                alert("An error occurred while unfollowing.");
+            } finally {
+                hideLoadingIndicator();
+            }
+        }
+
+        function logout() {
+            window.location.href = '/logout';
+        }
+
+        // Initial fetch on page load
+        fetchNonFollowers();
+    </script>
+</body>
+</html>
